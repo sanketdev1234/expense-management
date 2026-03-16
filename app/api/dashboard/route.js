@@ -18,7 +18,10 @@
  */
 
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
+
+
 import { connectDB } from "@/lib/mongodb";
 import Expense from "@/models/Expense";
 import Budget from "@/models/Budget";
@@ -26,7 +29,7 @@ import { getMonthRange, getCurrentMonth } from "@/lib/utils";
 
 export async function GET(request) {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

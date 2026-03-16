@@ -11,7 +11,10 @@
  */
 
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
+
+
 import { connectDB } from "@/lib/mongodb";
 import Expense from "@/models/Expense";
 import { getMonthRange, getCurrentMonth } from "@/lib/utils";
@@ -19,7 +22,7 @@ import { getMonthRange, getCurrentMonth } from "@/lib/utils";
 // ── GET /api/expenses ────────────────────────────────────────────────────────
 export async function GET(request) {
   try {
-    const session = await auth();
+   const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -47,7 +50,7 @@ export async function GET(request) {
 // ── POST /api/expenses ───────────────────────────────────────────────────────
 export async function POST(request) {
   try {
-    const session = await auth();
+   const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

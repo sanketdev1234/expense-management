@@ -1,23 +1,15 @@
 /**
  * app/page.js  — Landing / Home Page
- *
- * This is the public-facing landing page at route "/"
- * It's a Server Component — no "use client" needed.
- *
- * WHAT IT DOES:
- * - If user is already logged in → redirect to /dashboard
- * - If not logged in → show marketing landing page with CTA buttons
- *
- * PHASE 3 (Day 2): Build this after auth pages are working.
  */
 
-import { auth } from "@/lib/auth";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default async function LandingPage() {
   // Server-side session check
-  const session = await auth();
+  const session = await getServerSession(authOptions);
 
   // Already logged in? Skip landing page
   if (session) {

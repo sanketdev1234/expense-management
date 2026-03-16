@@ -8,15 +8,9 @@
  *
  * USAGE: Wrap your layout's children with <Providers>.
  */
-
 "use client";
-
 import { SessionProvider } from "next-auth/react";
 
 export default function Providers({ children }) {
-  return (
-    <SessionProvider>
-      {children}
-    </SessionProvider>
-  );
+  return <SessionProvider>{children}</SessionProvider>;
 }
