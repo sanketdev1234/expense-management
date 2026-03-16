@@ -1,65 +1,112 @@
-import Image from "next/image";
+/**
+ * app/page.js  — Landing / Home Page
+ *
+ * This is the public-facing landing page at route "/"
+ * It's a Server Component — no "use client" needed.
+ *
+ * WHAT IT DOES:
+ * - If user is already logged in → redirect to /dashboard
+ * - If not logged in → show marketing landing page with CTA buttons
+ *
+ * PHASE 3 (Day 2): Build this after auth pages are working.
+ */
 
-export default function Home() {
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+
+export default async function LandingPage() {
+  // Server-side session check
+  const session = await auth();
+
+  // Already logged in? Skip landing page
+  if (session) {
+    redirect("/dashboard");
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main
+      className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden"
+      style={{ background: "var(--bg-primary)" }}
+    >
+      {/* Background glow effects */}
+      <div
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-10 blur-3xl pointer-events-none"
+        style={{ background: "radial-gradient(circle, #3b82f6, transparent 70%)" }}
+      />
+      <div
+        className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full opacity-8 blur-3xl pointer-events-none"
+        style={{ background: "radial-gradient(circle, #8b5cf6, transparent 70%)" }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 text-center max-w-2xl page-enter">
+        {/* Logo / icon */}
+        <div className="text-6xl mb-6">💰</div>
+
+        <h1 className="text-5xl font-extrabold mb-4 leading-tight">
+          <span className="gradient-text">Smart Expense</span>
+          <br />
+          <span style={{ color: "var(--text-primary)" }}>Tracker</span>
+        </h1>
+
+        <p className="text-lg mb-10" style={{ color: "var(--text-muted)" }}>
+          Take control of your finances. Track expenses, set budgets,
+          <br />
+          and visualize your spending — all in one place.
+        </p>
+
+        {/* Feature pills */}
+        <div className="flex flex-wrap justify-center gap-3 mb-12">
+          {[
+            "📊 Visual Analytics",
+            "💳 Expense Tracking",
+            "🎯 Budget Alerts",
+            "📅 Monthly Reports",
+          ].map((f) => (
+            <span
+              key={f}
+              className="px-4 py-2 rounded-full text-sm font-medium"
+              style={{
+                background: "rgba(59,130,246,0.1)",
+                border: "1px solid rgba(59,130,246,0.2)",
+                color: "#93c5fd",
+              }}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              {f}
+            </span>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* CTA Buttons */}
+        <div className="flex gap-4 justify-center">
+          <Link
+            href="/register"
+            className="btn-primary px-8 py-3 rounded-xl text-base"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Get Started Free
+          </Link>
+          <Link
+            href="/login"
+            className="px-8 py-3 rounded-xl text-base font-semibold transition hover:opacity-80"
+            style={{
+              background: "var(--bg-card)",
+              border: "1px solid var(--border)",
+              color: "var(--text-primary)",
+            }}
           >
-            Documentation
-          </a>
+            Sign In
+          </Link>
         </div>
-      </main>
-    </div>
+      </div>
+
+      {/* Bottom credit */}
+      <p
+        className="absolute bottom-6 text-xs"
+        style={{ color: "var(--text-muted)" }}
+      >
+        Built with Next.js · MongoDB · NextAuth
+      </p>
+    </main>
   );
 }
