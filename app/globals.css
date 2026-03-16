@@ -1,10 +1,3 @@
-/**
- * app/globals.css
- *
- * Global styles. Tailwind directives + custom CSS variables for our dark theme.
- * Import a distinctive font from Google Fonts for a premium look.
- */
-
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
@@ -13,17 +6,17 @@
 
 /* ─── CSS Custom Properties (Design Tokens) ─────────────────────────── */
 :root {
-  --bg-primary:   #080e17;   /* Deepest background */
-  --bg-card:      #0d1628;   /* Card / panel background */
-  --bg-input:     #111e33;   /* Input field background */
-  --border:       #1a2d4a;   /* Subtle borders */
-  --text-primary: #f1f5f9;   /* Main text */
-  --text-muted:   #64748b;   /* Secondary / label text */
-  --accent-blue:  #3b82f6;   /* Primary action color */
-  --accent-purple:#8b5cf6;   /* Secondary accent */
-  --accent-green: #10b981;   /* Success / positive */
-  --accent-red:   #ef4444;   /* Danger / over-budget */
-  --accent-amber: #f59e0b;   /* Warning */
+  --bg-primary:   #080e17;
+  --bg-card:      #0d1628;
+  --bg-input:     #111e33;
+  --border:       #1a2d4a;
+  --text-primary: #f1f5f9;
+  --text-muted:   #64748b;
+  --accent-blue:  #3b82f6;
+  --accent-purple:#8b5cf6;
+  --accent-green: #10b981;
+  --accent-red:   #ef4444;
+  --accent-amber: #f59e0b;
 }
 
 /* ─── Base Styles ─────────────────────────────────────────────────────── */
@@ -44,14 +37,12 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Glass card effect */
 .glass {
   background: rgba(13, 22, 40, 0.8);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
 }
 
-/* Gradient text */
 .gradient-text {
   background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
   -webkit-background-clip: text;
@@ -60,22 +51,12 @@ body {
 }
 
 /* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-card);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #2a3f63;
-}
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: var(--bg-card); }
+::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2a3f63; }
 
-/* Input focus ring */
+/* Input */
 .input-field {
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -88,27 +69,18 @@ body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Button variants */
+/* Buttons */
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
   color: white;
   font-weight: 600;
   transition: opacity 0.2s, transform 0.1s;
 }
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-.btn-primary:active {
-  transform: translateY(0);
-}
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
+.btn-primary:hover    { opacity: 0.9; transform: translateY(-1px); }
+.btn-primary:active   { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-/* Card base */
+/* Card */
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -116,7 +88,7 @@ body {
   padding: 24px;
 }
 
-/* Sidebar link active state */
+/* Sidebar nav links */
 .nav-link {
   display: flex;
   align-items: center;
@@ -128,34 +100,20 @@ body {
   font-size: 0.9rem;
   transition: background 0.15s, color 0.15s;
 }
-.nav-link:hover {
-  background: rgba(59, 130, 246, 0.08);
-  color: var(--text-primary);
-}
-.nav-link.active {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--accent-blue);
-}
+.nav-link:hover  { background: rgba(59, 130, 246, 0.08); color: var(--text-primary); }
+.nav-link.active { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
 
-/* Table row hover */
+/* Table rows */
 .table-row {
   border-bottom: 1px solid var(--border);
   transition: background 0.15s;
 }
-.table-row:hover {
-  background: rgba(59, 130, 246, 0.04);
-}
+.table-row:hover { background: rgba(59, 130, 246, 0.04); }
 
-/* Page fade-in animation */
+/* Page animation */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .page-enter {
   animation: fadeInUp 0.35s ease forwards;
