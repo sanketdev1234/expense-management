@@ -198,7 +198,7 @@ export default function AnalyticsPage() {
                 <stop offset="100%" stopColor="#8b5cf6" />
               </linearGradient>
             </defs>
-            <XAxis dataKey="month" tick={{ fill:"#64748b", fontSize:12 }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="month" tick={{ fill:"#64748b", fontSize:13 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill:"#64748b", fontSize:12 }} axisLine={false} tickLine={false}
               tickFormatter={(v) => v >= 1000 ? `₹${(v/1000).toFixed(0)}k` : `₹${v}`} />
             <Tooltip formatter={(v) => [formatCurrency(v), "Spent"]}

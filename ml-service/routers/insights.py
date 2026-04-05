@@ -86,14 +86,15 @@ def get_insights(req: InsightsRequest):
 
     # ── Build DataFrame ─────────────────────────────────────────────────────
     df = pd.DataFrame([e.dict() for e in req.expenses])
+    print(df)
     df["date"] = pd.to_datetime(df["date"])
     df["month"] = df["date"].dt.strftime("%Y-%m")
     df["day_of_week"] = df["date"].dt.dayofweek  # 0=Mon, 6=Sun
     df["is_weekend"] = df["day_of_week"] >= 5
-
+    print(df)
     months = sorted(df["month"].unique())
     months_analyzed = len(months)
-
+    print(months)
     insights = []
 
     # ── Category Analysis ───────────────────────────────────────────────────

@@ -1,14 +1,3 @@
-# ml-service/scripts/train_category_model.py
-#
-# PURPOSE: Train the TF-IDF + Logistic Regression model for category prediction.
-# Run: python scripts/train_category_model.py
-#
-# HOW IT WORKS:
-# 1. Load training data (expense title → category pairs)
-# 2. Convert titles to TF-IDF vectors (text → numbers)
-# 3. Train Logistic Regression classifier
-# 4. Save model + vectorizer to disk using joblib
-# 5. Print accuracy report
 
 import pandas as pd
 import numpy as np
@@ -27,41 +16,65 @@ print(f"📊 Loaded {len(df)} training samples")
 X = df["title"].str.lower().str.strip()
 y = df["category"]
 
-# ── Use smaller test size since dataset is small ───────────────────────────────
+# ── Train/Test Split ───────────────────────────────────────────────────────────
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.1, random_state=42  # ← 10% test instead of 20%
+    X, y, test_size=0.2, random_state=42, stratify=y
+    #                                     ↑
+    #              stratify=y ensures each category is
+    #              proportionally represented in both sets
+    #              e.g. if Food = 30% of data,
+    #              it's 30% in train AND 30% in test
 )
+
+print(f"Training samples: {len(X_train)}")
+print(f"Testing samples:  {len(X_test)}")
 
 # ── Build Pipeline ─────────────────────────────────────────────────────────────
 pipeline = Pipeline([
     ("tfidf", TfidfVectorizer(
-        ngram_range=(1, 3),     # ← trigrams added
-        max_features=10000,     # ← more features
+        ngram_range=(1, 3),
+        max_features=10000,
         sublinear_tf=True,
         min_df=1,
         analyzer="word",
     )),
     ("clf", LogisticRegression(
         max_iter=2000,
-        C=10.0,                 # ← higher C = less regularization
+        C=10.0,
         solver="lbfgs",
     )),
 ])
 
-# ── Train on FULL dataset for best accuracy ────────────────────────────────────
-# Cross-validate to measure real accuracy
+# ── Step 1: Train on TRAINING SET only ────────────────────────────────────────
+pipeline.fit(X_train, y_train)
+print("\n✅ Model trained on training set")
+
+# ── Step 2: Evaluate on TEST SET (data model has NEVER seen) ──────────────────
+y_pred = pipeline.predict(X_test)
+
+test_accuracy = accuracy_score(y_test, y_pred)
+print(f"\n📊 Test Set Accuracy: {test_accuracy:.2%}")
+
+print("\n📋 Classification Report (per category):")
+print(classification_report(y_test, y_pred))
+
+# ── Step 3: Cross-Validation for more reliable measurement ────────────────────
 cv_scores = cross_val_score(pipeline, X, y, cv=5, scoring="accuracy")
-print(f"\n✅ Cross-validation accuracy: {cv_scores.mean():.2%} (+/- {cv_scores.std():.2%})")
+print(f"📊 Cross-validation accuracy: {cv_scores.mean():.2%} (+/- {cv_scores.std():.2%})")
 
-# Train on ALL data for production model
+# ── Step 4: Retrain on FULL dataset for production ────────────────────────────
+# Now that we know the accuracy is good, train on ALL data
+# More training data = better production model
+print("\n🔄 Retraining on full dataset for production...")
 pipeline.fit(X, y)
+print("✅ Production model trained on all data")
 
-# ── Save Model ─────────────────────────────────────────────────────────────────
+# ── Step 5: Save Model ─────────────────────────────────────────────────────────
 os.makedirs("models", exist_ok=True)
 joblib.dump(pipeline, "models/category_model.pkl")
 print("✅ Model saved → models/category_model.pkl")
 
-# ── Quick Test ─────────────────────────────────────────────────────────────────
+# ── Step 6: Quick Test Predictions ────────────────────────────────────────────
 test_titles = [
     "Uber ride to airport",
     "Netflix monthly subscription",
@@ -75,9 +88,10 @@ test_titles = [
     "Gym membership",
 ]
 
-print("\n🔍 Quick Predictions:")
+print("\n🔍 Quick Predictions (production model):")
 for title in test_titles:
-    pred = pipeline.predict([title.lower()])[0]
-    proba = pipeline.predict_proba([title.lower()])[0]
+    pred       = pipeline.predict([title.lower()])[0]
+    proba      = pipeline.predict_proba([title.lower()])[0]
     confidence = max(proba) * 100
     print(f"  '{title}' → {pred} ({confidence:.1f}%)")
+

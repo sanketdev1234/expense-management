@@ -1,37 +1,60 @@
 // app/api/ml/scan-anomalies/route.js
-// FIXED: accepts single expense + history, calls detect-anomaly endpoint
+//
+// Bridge: Next.js → Python ML service
+// Receives a single expense + history from frontend,
+// forwards to Python detect-anomaly endpoint via lib/ml.js.
+// Uses lib/ml.js for the actual HTTP call to Python.
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
-
-const ML_URL = process.env.ML_SERVICE_URL || "http://localhost:8000";
+import { detectAnomaly } from "@/lib/ml"; // ← lib/ml.js handles HTTP + errors
 
 export async function POST(request) {
   try {
+    // ── Auth check ────────────────────────────────────────────────────────
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
+    // ── Read request body ─────────────────────────────────────────────────
+    // expense = the new expense being checked
+    // history = past expenses for the same user (sent by frontend)
     const { expense, history } = await request.json();
 
     if (!expense || !history) {
-      return NextResponse.json({ is_anomaly: false, severity: "none", reason: "Missing data" });
+      // Missing data — return safe non-anomaly response
+      return NextResponse.json({
+        is_anomaly: false,
+        severity:   "none",
+        reason:     "Missing expense or history data",
+      });
     }
 
-    const mlRes = await fetch(`${ML_URL}/api/ml/detect-anomaly`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ expense, history }),
-    });
+    // ── Call ML service via lib/ml.js ─────────────────────────────────────
+    // detectAnomaly() calls mlFetch() which:
+    //   - POSTs { expense, history } to /api/ml/detect-anomaly
+    //   - Returns null if ML service is down (graceful degradation)
+    const result = await detectAnomaly(expense, history);
 
-    if (!mlRes.ok) {
-      return NextResponse.json({ is_anomaly: false, severity: "none", reason: "ML service unavailable" });
+    // ── Graceful degradation if ML is down ────────────────────────────────
+    // lib/ml.js returns null when ML service is unavailable
+    // We return a safe non-anomaly fallback — don't block the user
+    if (!result) {
+      return NextResponse.json({
+        is_anomaly: false,
+        severity:   "none",
+        reason:     "ML service unavailable — anomaly check skipped",
+      });
     }
 
-    const data = await mlRes.json();
-    return NextResponse.json(data);
+    return NextResponse.json(result);
   } catch (error) {
-    console.error("scan-anomalies error:", error);
-    return NextResponse.json({ is_anomaly: false, severity: "none", reason: "Error" });
+    console.error("scan-anomalies route error:", error);
+    return NextResponse.json(
+      { is_anomaly: false, severity: "none", reason: "Error" },
+      { status: 500 }
+    );
   }
 }

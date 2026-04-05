@@ -5,8 +5,9 @@ import { connectDB } from "@/lib/mongodb";
 import Expense from "@/models/Expense";
 
 // ── PATCH /api/expenses/:id ──────────────────────────────────────────────────
-export async function PATCH(request, { params }) {
+export async function PATCH(request,  {params} ) {
   try {
+   
     const { id } = await params; // ← FIX: await params
     const session = await getServerSession(authOptions);
     if (!session) {
