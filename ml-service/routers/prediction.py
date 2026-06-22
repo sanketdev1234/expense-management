@@ -119,7 +119,7 @@ def predict_spending(req: PredictionRequest):
     if will_exceed:
         message = (
             f"⚠️ You may exceed your budget by ₹{excess_amount:,.0f} this month. "
-            f"Try to spend less than ₹{daily_rate * 0.8:,.0f}/day."
+            f"Try to spend less than  eqaul to  ₹{req.budget_limit-(days_elapsed*daily_rate) /days_remaining :,.0f}/day."
         )
     elif req.budget_limit and final_prediction < req.budget_limit * 0.8:
         message = f"✅ You're on track! Predicted to use {(final_prediction/req.budget_limit)*100:.0f}% of your budget."

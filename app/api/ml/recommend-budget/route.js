@@ -15,6 +15,7 @@ import { connectDB } from "@/lib/mongodb";
 import Expense from "@/models/Expense";
 import { subMonths } from "date-fns";
 import { recommendBudget } from "@/lib/ml"; // ← lib/ml.js handles HTTP + errors
+import { getCurrentMonth } from "@/lib/utils";
 
 export async function GET(request) {
   try {
@@ -27,12 +28,14 @@ export async function GET(request) {
     await connectDB();
     const userId = session.user.id;
 
-    // ── Fetch last 6 months from MongoDB ──────────────────────────────────
-    const sixMonthsAgo = subMonths(new Date(), 6);
+    // ── Fetch last 12 months from MongoDB ──────────────────────────────────
+    const twelveMonthsAgo  = subMonths(new Date(), 12);
     const expenses = await Expense.find({
       userId,
-      date: { $gte: sixMonthsAgo },
+      date: { $gte: twelveMonthsAgo },
     }).lean();
+
+
 
     // ── Minimum data check ────────────────────────────────────────────────
     // Linear Regression needs at least a few data points
@@ -69,11 +72,15 @@ export async function GET(request) {
     //   ...
     // ]
 
+    const currentMonth=getCurrentMonth();
+    const filterexpenses=expensesForML.filter((e)=>{
+      return e.month!==currentMonth
+    })
     // ── Call ML service via lib/ml.js ─────────────────────────────────────
     // recommendBudget() calls mlFetch() which:
     //   - POSTs { expenses, buffer_percent } to /api/ml/recommend-budget
     //   - Returns null if ML service is down (graceful degradation)
-    const result = await recommendBudget(expensesForML, 10);
+    const result = await recommendBudget(filterexpenses, 10);
 
     // ── Graceful degradation if ML is down ────────────────────────────────
     if (!result) {

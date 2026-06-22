@@ -157,7 +157,7 @@ export default function DashboardPage() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(v) => [formatCurrency(v), ""]}
+                  formatter={(v) => [formatCurrency(v), "spent"]}
                   contentStyle={{
                     background: "var(--bg-input)",
                     border: "1px solid var(--border)",

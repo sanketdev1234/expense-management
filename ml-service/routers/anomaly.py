@@ -94,7 +94,7 @@ def detect_anomaly(req: AnomalyRequest):
     amounts = np.array(same_category)
     mean = float(np.mean(amounts))
     std = float(np.std(amounts))
-    median = float(np.median(amounts))
+    median = float(np.median(amounts)) 
 
     # ── Z-Score Method ──────────────────────────────────────────────────────
     z_score = calculate_z_score(amount, mean, std)

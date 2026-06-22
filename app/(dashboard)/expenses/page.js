@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { format } from "date-fns";
+import { format, subMonths } from "date-fns";
 import { Plus, Pencil, Trash2, Filter, ChevronLeft, ChevronRight, Sparkles, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 import { formatCurrency, getCurrentMonth, CATEGORIES, CATEGORY_ICONS } from "@/lib/utils";
@@ -13,12 +13,10 @@ function usePredictCategory(title, enabled = true) {
   const timerRef = useRef(null);
 
   useEffect(() => {
-    // Need at least 4 chars for meaningful prediction
     if (!enabled || !title || title.trim().length < 4) {
       setPrediction(null);
       return;
     }
-
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
       setPredicting(true);
@@ -30,7 +28,6 @@ function usePredictCategory(title, enabled = true) {
         });
         if (res.ok) {
           const data = await res.json();
-          // Only auto-fill if confidence > 50%
           if (data.category && data.confidence > 50) {
             setPrediction(data);
           } else {
@@ -42,7 +39,7 @@ function usePredictCategory(title, enabled = true) {
       } finally {
         setPredicting(false);
       }
-    }, 700); // 700MS debounce
+    }, 700);
 
     return () => clearTimeout(timerRef.current);
   }, [title, enabled]);
@@ -50,19 +47,35 @@ function usePredictCategory(title, enabled = true) {
   return { prediction, predicting };
 }
 
+// ── Helper: safe date string from MongoDB date ────────────────────────────────
+// Fixes timezone issue: "2026-06-01T10:30:00.000Z" → "2026-06-01"
+// Using slice avoids timezone offset shifting the date
+function toDateInputValue(isoString) {
+  if (!isoString) return format(new Date(), "yyyy-MM-dd");
+  // slice(0,10) gives "YYYY-MM-DD" directly from ISO string
+  // avoids new Date() timezone conversion
+  return new Date(isoString).toISOString().slice(0, 10);
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [month, setMonth] = useState(getCurrentMonth());
+  const [expenses,       setExpenses]       = useState([]);
+  const [loading,        setLoading]        = useState(true);
+  const [month,          setMonth]          = useState(getCurrentMonth());
   const [filterCategory, setFilterCategory] = useState("All");
-  const [showModal, setShowModal] = useState(false);
+  const [showModal,      setShowModal]      = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
+
+  // ── Fetch 3 months of expenses for anomaly history ─────────────────────────
+  // current month expenses → for table display
+  // 3 months history → for anomaly detection
+  const [expenseHistory, setExpenseHistory] = useState([]); // last 3 months flat array
 
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/expenses?month=${month}`);
+      // Fetch current month for table
+      const res  = await fetch(`/api/expenses?month=${month}`);
       const data = await res.json();
       setExpenses(Array.isArray(data) ? data : []);
     } catch {
@@ -72,7 +85,29 @@ export default function ExpensesPage() {
     }
   }, [month]);
 
+  // Fetch 3 months of history for anomaly detection
+  // Runs once on mount — not dependent on month navigation
+  const fetchHistory = useCallback(async () => {
+    try {
+      const now = new Date();
+      const months = [0, 1, 2].map((i) => {
+        const d = subMonths(now, i);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      });
+      // Fetch all 3 months in parallel
+      const results = await Promise.all(
+        months.map((m) => fetch(`/api/expenses?month=${m}`).then((r) => r.json()))
+      );
+      // Flatten into one array
+      const flat = results.flat().filter(Array.isArray(results[0]) ? Boolean : () => true);
+      setExpenseHistory(flat.filter((e) => e && e.amount));
+    } catch {
+      // Silently fail — anomaly just won't work
+    }
+  }, []);
+
   useEffect(() => { fetchExpenses(); }, [fetchExpenses]);
+  useEffect(() => { fetchHistory();  }, [fetchHistory]);
 
   async function handleDelete(id) {
     if (!confirm("Delete this expense?")) return;
@@ -169,8 +204,10 @@ export default function ExpensesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((exp) => (
-                <tr key={exp._id} className="table-row">
+              {filtered.map((exp, i) => (
+                <tr key={exp._id}
+                  style={{ borderBottom: i < filtered.length - 1 ? "1px solid var(--border)" : "none" }}
+                  className="transition-opacity hover:opacity-80">
                   <td className="px-5 py-3.5">
                     <span className="text-sm mono" style={{ color: "var(--text-muted)" }}>
                       {format(new Date(exp.date), "dd MMM")}
@@ -201,8 +238,8 @@ export default function ExpensesPage() {
                         <Pencil size={14} />
                       </button>
                       <button onClick={() => handleDelete(exp._id)}
-                        className="p-1.5 rounded-lg transition hover:text-red-400"
-                        style={{ color: "var(--text-muted)" }}>
+                        className="p-1.5 rounded-lg transition hover:opacity-70"
+                        style={{ color: "#ef4444" }}>
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -214,38 +251,47 @@ export default function ExpensesPage() {
         )}
       </div>
 
+      {/* Modal */}
       {showModal && (
         <ExpenseModal
           expense={editingExpense}
-          allExpenses={expenses}
+          expenseHistory={expenseHistory}   // ← 3 months history for anomaly
           onClose={() => { setShowModal(false); setEditingExpense(null); }}
-          onSaved={() => { setShowModal(false); setEditingExpense(null); fetchExpenses(); }}
+          onSaved={() => {
+            setShowModal(false);
+            setEditingExpense(null);
+            fetchExpenses();  // refresh table
+            fetchHistory();   // refresh anomaly history too
+          }}
         />
       )}
     </div>
   );
 }
 
-// ── Expense Modal with ML Category Auto-Prediction ────────────────────────────
-function ExpenseModal({ expense, allExpenses, onClose, onSaved }) {
+// ── Expense Modal ─────────────────────────────────────────────────────────────
+function ExpenseModal({ expense, expenseHistory = [], onClose, onSaved }) {
   const isEdit = !!expense;
-  const [form, setForm] = useState({
-    title: expense?.title || "",
-    amount: expense?.amount || "",
-    category: expense?.category || CATEGORIES[0],
-    date: expense?.date
-      ? format(new Date(expense.date), "yyyy-MM-dd")
-      : format(new Date(), "yyyy-MM-dd"),
-    description: expense?.description || "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [aiUsed, setAiUsed] = useState(false);
-  const [anomalyWarning, setAnomalyWarning] = useState(null);
 
-  // ML prediction — only for new expenses, not edits
+  const [form, setForm] = useState({
+    title:       expense?.title                          || "",
+    amount:      expense?.amount?.toString()             || "",  // FIX: number → string
+    category:    expense?.category                       || CATEGORIES[0],
+    date:        expense?.date
+                   ? toDateInputValue(expense.date)      // FIX: timezone-safe
+                   : format(new Date(), "yyyy-MM-dd"),
+    description: expense?.description                   || "",
+  });
+
+  const [loading,        setLoading]        = useState(false);
+  const [aiUsed,         setAiUsed]         = useState(false);
+  const [anomalyWarning, setAnomalyWarning] = useState(null);
+  const [checkingAnomaly,setCheckingAnomaly]= useState(false);
+
+  // ML category prediction — only for new expenses
   const { prediction, predicting } = usePredictCategory(form.title, !isEdit);
 
-  // Auto-fill category when prediction arrives with good confidence
+  // Auto-fill category when prediction arrives
   useEffect(() => {
     if (prediction?.category && !isEdit) {
       setForm((prev) => ({ ...prev, category: prediction.category }));
@@ -256,29 +302,46 @@ function ExpenseModal({ expense, allExpenses, onClose, onSaved }) {
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    // If user manually changes category, clear AI badge
-    if (name === "category") setAiUsed(false);
+    if (name === "category") setAiUsed(false);   // clear AI badge on manual change
+    if (name === "amount")   setAnomalyWarning(null); // clear warning on amount change
   }
 
-  // Check for anomaly when amount is filled in
+  // ── Anomaly check on amount blur ───────────────────────────────────────────
   async function checkAnomaly() {
-    if (!form.amount || parseFloat(form.amount) <= 0 || allExpenses.length < 5) return;
+    const amount = parseFloat(form.amount);
+    if (!amount || amount <= 0) return;
+
+    // Filter history to SAME category as current expense
+    const sameCategoryHistory = expenseHistory.filter(
+      (e) => e.category === form.category
+    );
+
+    // Need minimum 5 same-category expenses for meaningful Z-Score
+    // If less than 5 → not enough data → skip silently
+    if (sameCategoryHistory.length < 5) {
+      setAnomalyWarning(null);
+      return;
+    }
+
+    setCheckingAnomaly(true);
+    setAnomalyWarning(null);
     try {
       const res = await fetch("/api/ml/scan-anomalies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           expense: {
-            title: form.title,
-            amount: parseFloat(form.amount),
+            title:    form.title || "New expense",
+            amount:   amount,
             category: form.category,
-            date: form.date,
+            date:     form.date,
           },
-          history: allExpenses.map((e) => ({
-            title: e.title,
-            amount: e.amount,
+          // Send full 3-month history — Python filters by category internally too
+          history: expenseHistory.map((e) => ({
+            title:    e.title,
+            amount:   e.amount,
             category: e.category,
-            date: new Date(e.date).toISOString().split("T")[0],
+            date:     toDateInputValue(e.date),
           })),
         }),
       });
@@ -291,10 +354,13 @@ function ExpenseModal({ expense, allExpenses, onClose, onSaved }) {
         }
       }
     } catch {
-      // Fail silently
+      // Silently fail — anomaly is optional
+    } finally {
+      setCheckingAnomaly(false);
     }
   }
 
+  // ── Submit ─────────────────────────────────────────────────────────────────
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.title.trim() || !form.amount || !form.category || !form.date) {
@@ -307,8 +373,8 @@ function ExpenseModal({ expense, allExpenses, onClose, onSaved }) {
     }
     setLoading(true);
     try {
-      const url = isEdit ? `/api/expenses/${expense._id}` : "/api/expenses";
-      const method = isEdit ? "PATCH" : "POST";
+      const url    = isEdit ? `/api/expenses/${expense._id}` : "/api/expenses";
+      const method = isEdit ? "PATCH"                        : "POST";
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -335,6 +401,7 @@ function ExpenseModal({ expense, allExpenses, onClose, onSaved }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="card w-full max-w-md relative" style={{ maxHeight: "90vh", overflowY: "auto" }}>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-bold text-lg" style={{ color: "var(--text-primary)" }}>
@@ -344,17 +411,29 @@ function ExpenseModal({ expense, allExpenses, onClose, onSaved }) {
             style={{ color: "var(--text-muted)" }}>×</button>
         </div>
 
+        {/* Anomaly checking indicator */}
+        {checkingAnomaly && (
+          <div className="flex items-center gap-2 p-3 rounded-xl mb-4 text-xs"
+            style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
+            <div className="w-3 h-3 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <span style={{ color: "#f59e0b" }}>Checking for unusual spending...</span>
+          </div>
+        )}
+
         {/* Anomaly Warning Banner */}
-        {anomalyWarning && (
+        {anomalyWarning && !checkingAnomaly && (
           <div className="flex items-start gap-2 p-3 rounded-xl mb-4"
-            style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)" }}>
-            <AlertTriangle size={16} color="#f59e0b" className="flex-shrink-0 mt-0.5" />
-            <p className="text-xs" style={{ color: "#f59e0b" }}>{anomalyWarning}</p>
+            style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.35)" }}>
+            <AlertTriangle size={15} color="#f59e0b" className="flex-shrink-0 mt-0.5" />
+            <p className="text-xs leading-relaxed" style={{ color: "#f59e0b" }}>
+              {anomalyWarning}
+            </p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title — triggers ML prediction */}
+
+          {/* Title */}
           <div>
             <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>
               Title *
@@ -365,17 +444,17 @@ function ExpenseModal({ expense, allExpenses, onClose, onSaved }) {
                 value={form.title}
                 onChange={handleChange}
                 placeholder="e.g. Uber ride, Pizza Hut, Netflix..."
-                className="input-field w-full px-4 py-2.5 rounded-xl text-sm pr-10"
+                className="input-field w-full px-4 py-2.5 rounded-xl text-sm pr-12"
               />
-              {/* Spinner while predicting */}
               {predicting && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
             </div>
           </div>
 
+          {/* Amount + Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>
@@ -388,7 +467,7 @@ function ExpenseModal({ expense, allExpenses, onClose, onSaved }) {
                 step="0.01"
                 value={form.amount}
                 onChange={handleChange}
-                onBlur={checkAnomaly}
+                onBlur={checkAnomaly}         // ← anomaly fires on blur
                 placeholder="0.00"
                 className="input-field w-full px-4 py-2.5 rounded-xl text-sm mono"
               />
@@ -433,6 +512,7 @@ function ExpenseModal({ expense, allExpenses, onClose, onSaved }) {
             </select>
           </div>
 
+          {/* Description */}
           <div>
             <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>
               Description (optional)
@@ -447,6 +527,7 @@ function ExpenseModal({ expense, allExpenses, onClose, onSaved }) {
             />
           </div>
 
+          {/* Buttons */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"

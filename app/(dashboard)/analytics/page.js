@@ -30,8 +30,8 @@ export default function AnalyticsPage() {
     async function fetchAll() {
       try {
         // Build last 6 months
-        const months = Array.from({ length: 6 }, (_, i) => {
-          const d = subMonths(new Date(), 5 - i);
+        const months = Array.from({ length: 12 }, (_, i) => {
+          const d = subMonths(new Date(), 11 - i);
           return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
         });
 

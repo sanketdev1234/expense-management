@@ -18,8 +18,7 @@ export async function GET(request) {
     const month = searchParams.get("month") || getCurrentMonth();
     const { start, end } = getMonthRange(month);
 
-    // FIX: cast userId string → ObjectId for aggregate queries
-    const userId = new mongoose.Types.ObjectId(session.user.id);
+
 
     await connectDB();
 
@@ -27,7 +26,7 @@ export async function GET(request) {
       Expense.find({ userId: session.user.id, date: { $gte: start, $lte: end } }).sort({ date: -1 }),
       Budget.findOne({ userId: session.user.id, month }),
       Expense.aggregate([
-        { $match: { userId, date: { $gte: start, $lte: end } } },
+        { $match: { userId:session.user.id, date: { $gte: start, $lte: end } } },
         { $group: { _id: "$category", total: { $sum: "$amount" } } },
         { $sort: { total: -1 } },
       ]),

@@ -28,7 +28,7 @@ export async function GET(request) {
     const userId = session.user.id;
 
     // ── Fetch last 6 months from MongoDB ──────────────────────────────────
-    const sixMonthsAgo = subMonths(new Date(), 6);
+    const sixMonthsAgo = subMonths(new Date(), 12);
     const expenses = await Expense.find({
       userId,
       date: { $gte: sixMonthsAgo },

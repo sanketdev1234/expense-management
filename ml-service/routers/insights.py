@@ -176,7 +176,7 @@ def get_insights(req: InsightsRequest):
             f"🗓️ Your weekend spending is {weekend_ratio:.1f}× higher than weekdays "
             f"(₹{weekend_avg:,.0f} vs ₹{weekday_avg:,.0f} per expense). "
             f"Consider planning weekend activities in advance."
-        )
+        ) 
 
     # Income percentage insight
     monthly_totals = df.groupby("month")["amount"].sum()
