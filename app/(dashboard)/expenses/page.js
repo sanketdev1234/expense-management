@@ -393,7 +393,6 @@ function ExpenseModal({ expense, expenseHistory = [], onClose, onSaved }) {
       setLoading(false);
     }
   }
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -430,7 +429,6 @@ function ExpenseModal({ expense, expenseHistory = [], onClose, onSaved }) {
             </p>
           </div>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-4">
 
           {/* Title */}

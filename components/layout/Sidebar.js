@@ -22,6 +22,7 @@ import {
   BarChart2,
   LogOut,
   TrendingDown,
+  MessageCircle
 } from "lucide-react";
 
 const NAV_LINKS = [
@@ -29,6 +30,7 @@ const NAV_LINKS = [
   { href: "/expenses",   label: "Expenses",   icon: Receipt },
   { href: "/budget",     label: "Budget",     icon: Target },
   { href: "/analytics",  label: "Analytics",  icon: BarChart2 },
+  { href: "/chat",       label: "FinBot AI",  icon: MessageCircle },
 ];
 
 export default function Sidebar() {

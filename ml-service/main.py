@@ -1,9 +1,13 @@
 # ml-service/main.py
 # FastAPI entry point — starts the ML microservice on port 8000
+from dotenv import load_dotenv
+load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import category, budget, anomaly, prediction, insights
+from routers import category, budget, anomaly, prediction, insights  , chat
+
+
 
 app = FastAPI(
     title="Smart Expense Tracker — ML Service",
@@ -26,6 +30,7 @@ app.include_router(budget.router,     prefix="/api/ml", tags=["Budget Recommenda
 app.include_router(anomaly.router,    prefix="/api/ml", tags=["Anomaly Detection"])
 app.include_router(prediction.router, prefix="/api/ml", tags=["Spending Prediction"])
 app.include_router(insights.router,   prefix="/api/ml", tags=["Smart Insights"])
+app.include_router(chat.router, prefix="/api/ml", tags=["AI Chat"])
 
 @app.get("/")
 def root():
