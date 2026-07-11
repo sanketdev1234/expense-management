@@ -51,3 +51,6 @@ yarn-error.log*
 
 # Seed script output (optional — keep if you want)
 # seed-expenses.js
+
+
+ml-service/.env
