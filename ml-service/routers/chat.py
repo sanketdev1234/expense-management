@@ -72,7 +72,7 @@ Rules:
         try:
             # Build payload map for stateful tracking matching GA specifications
             params = {
-                "model": "gemini-3.5-flash",
+                "model": "gemini-3.6-flash",
                 "input": req.message,
                 "system_instruction": system_prompt, # specified each turn as it is interaction-scoped
                 "stream": True, # Triggers streaming event updates
