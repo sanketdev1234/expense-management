@@ -1,6 +1,3 @@
-// components/ml/MLInsightsPanel.js
-// Add this component to your app/(dashboard)/analytics/page.js
-// Shows AI-generated insights, spending pattern, and predictions
 
 "use client";
 

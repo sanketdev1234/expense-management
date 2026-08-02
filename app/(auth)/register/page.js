@@ -1,14 +1,4 @@
-/**
- * app/(auth)/register/page.js  — Register Page  /register
- *
- * WHAT IT DOES:
- * - Shows name + email + password + confirm-password form
- * - Calls POST /api/register to create account
- * - On success → automatically logs in via signIn() → redirects to /dashboard
- * - On failure → shows error toast
- *
- * PHASE 3 (Day 2): Build alongside the login page.
- */
+
 
 "use client";
 

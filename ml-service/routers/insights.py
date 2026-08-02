@@ -1,17 +1,3 @@
-# ml-service/routers/insights.py
-#
-# FEATURE 3 + 6: Spending Pattern Analysis + Smart Insights
-#
-# ENDPOINT: POST /api/ml/insights
-# INPUT:  { "expenses": [...all user expenses...] }
-# OUTPUT: { "insights": [...], "pattern_type": "balanced", "category_analysis": {...} }
-#
-# WHAT IT DETECTS:
-# - Which category you overspend on
-# - Month-over-month % change per category
-# - Weekend vs weekday spending comparison
-# - User spending pattern type (Saver / Balanced / Heavy Spender)
-# - Actionable reduction suggestions
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -150,7 +136,7 @@ def get_insights(req: InsightsRequest):
         "spends_more_on": "weekends" if weekend_ratio > 1.2 else "weekdays" if weekend_ratio < 0.8 else "both equally"
     }
 
-    # ── Generate Insights ───────────────────────────────────────────────────
+    # ── Generate Insights 
     # Top category insight
     top_cat = max(category_analysis.items(), key=lambda x: x[1].total)
     top_cat_name = top_cat[0]
@@ -197,7 +183,7 @@ def get_insights(req: InsightsRequest):
             f"₹{top_cat[1].average_per_month * 0.12:,.0f}/month."
         )
 
-    # ── Spender Classification ──────────────────────────────────────────────
+    # ── Spender Classification 
     pattern_type, pattern_description = classify_spender(avg_monthly, req.monthly_income)
 
     return InsightsResponse(

@@ -1,13 +1,4 @@
-/**
- * app/(dashboard)/budget/page.js  — Budget Page  /budget
- *
- * WHAT IT DOES:
- * - Shows current month's budget vs actual spending
- * - Progress bar for each category showing % used
- * - Form to set/update the monthly budget and per-category limits
- *
- * PHASE 4 (Day 3): Build after budget API route is ready.
- */
+
 
 "use client";
 
@@ -27,14 +18,14 @@ export default function BudgetPage() {
   const [monthlyLimit, setMonthlyLimit] = useState("");
   const [categoryLimits, setCategoryLimits] = useState({});
 
-  // ── Fetch budget + spending ─────────────────────────────────────────────────
+  // ── Fetch budget + spending 
   useEffect(() => {
     async function fetchBudget() {
       try {
         const res = await fetch(`/api/budget?month=${month}`);
         const data = await res.json();
         setBudgetData(data);
-        // Pre-fill form if budget exists
+        
         if (data.budget) {
           setMonthlyLimit(data.budget.monthlyLimit.toString());
           setCategoryLimits(
@@ -52,7 +43,7 @@ export default function BudgetPage() {
     fetchBudget();
   }, [month]);
 
-  // ── Save budget ─────────────────────────────────────────────────────────────
+  // ── Save budget 
   async function handleSave() {
     if (!monthlyLimit || parseFloat(monthlyLimit) <= 0) {
       toast.error("Please enter a valid monthly limit");

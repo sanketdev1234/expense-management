@@ -1,17 +1,3 @@
-# ml-service/routers/budget.py
-#
-# FEATURE 2: Smart Budget Recommendation
-#
-# ENDPOINT: POST /api/ml/recommend-budget
-# INPUT:  { "expenses": [ {month, category, total}, ... ] }
-# OUTPUT: { "monthly_limit": 32000, "category_limits": {...}, "insights": [...] }
-#
-# HOW IT WORKS:
-# 1. Fetch user's last 3-6 months of expenses from MongoDB
-# 2. Group by category and calculate averages + trends
-# 3. Apply Linear Regression to predict next month's spending per category
-# 4. Add 10% buffer for safety margin
-# 5. Return recommended budget breakdown
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -22,7 +8,7 @@ from sklearn.linear_model import LinearRegression
 
 router = APIRouter()
 
-# ── Schemas ────────────────────────────────────────────────────────────────────
+
 class MonthlyExpense(BaseModel):
     month: str      # "2026-01" format
     category: str   # "Food & Dining"
@@ -44,7 +30,7 @@ class BudgetResponse(BaseModel):
     insights: List[str]
     months_analyzed: int
 
-# ── Helper Functions ───────────────────────────────────────────────────────────
+
 def detect_trend(values: List[float]) -> tuple:
     """
     Use Linear Regression to detect spending trend.
@@ -65,7 +51,7 @@ def detect_trend(values: List[float]) -> tuple:
     if mean_val == 0:
         return "stable", 0.0
 
-    # Percent change per month
+    
     trend_pct = (slope / mean_val) * 100
 
     if trend_pct > 5:
@@ -96,7 +82,7 @@ def predict_next_month(values: List[float]) -> float:
     # Never predict negative spending
     return max(0.0, float(prediction))
 
-# ── Endpoint ───────────────────────────────────────────────────────────────────
+
 @router.post("/recommend-budget", response_model=BudgetResponse)
 def recommend_budget(req: BudgetRequest):
     """
@@ -106,10 +92,10 @@ def recommend_budget(req: BudgetRequest):
     if not req.expenses:
         raise HTTPException(status_code=400, detail="No expense data provided")
 
-    # Build DataFrame
+    
     df = pd.DataFrame([e.dict() for e in req.expenses])
 
-    # Sort months chronologically
+   
     df = df.sort_values("month")
     months = sorted(df["month"].unique())
     months_analyzed = len(months)
@@ -117,7 +103,7 @@ def recommend_budget(req: BudgetRequest):
     if months_analyzed < 1:
         raise HTTPException(status_code=400, detail="Insufficient data")
 
-    # ── Per-category analysis ───────────────────────────────────────────────
+    
     category_limits = {}
     insights = []
     total_recommended = 0.0
@@ -127,7 +113,7 @@ def recommend_budget(req: BudgetRequest):
     for cat in categories:
         cat_df = df[df["category"] == cat].sort_values("month")
 
-        # Fill missing months with 0
+        
         cat_totals = []
         for month in months:
             month_data = cat_df[cat_df["month"] == month]["total"]
@@ -137,10 +123,10 @@ def recommend_budget(req: BudgetRequest):
         trend_label, trend_pct = detect_trend(cat_totals)
         predicted = predict_next_month(cat_totals)
 
-        # Add buffer
+        
         recommended = predicted * (1 + req.buffer_percent / 100)
-        recommended = round(recommended, -2)  # Round to nearest 100
-        recommended = max(recommended, 500.0)  # Minimum ₹500
+        recommended = round(recommended, -2)  
+        recommended = max(recommended, 500.0)  
 
         category_limits[cat] = CategoryBudget(
             recommended=recommended,
@@ -150,7 +136,7 @@ def recommend_budget(req: BudgetRequest):
         )
         total_recommended += recommended
 
-        # Generate insights
+        
         if trend_label == "increasing" and trend_pct > 10:
             insights.append(
                 f"⚠️ Your {cat} spending is increasing by {trend_pct:.0f}% per month. "
@@ -161,9 +147,9 @@ def recommend_budget(req: BudgetRequest):
                 f"✅ Great! Your {cat} spending decreased by {trend_pct:.0f}% recently."
             )
 
-    # ── Overall insights ────────────────────────────────────────────────────
+    
     if months_analyzed >= 3:
-        # Find biggest spending category
+        
         biggest_cat = max(category_limits.items(), key=lambda x: x[1].average)
         insights.insert(0,
             f"📊 You spend the most on {biggest_cat[0]}: "

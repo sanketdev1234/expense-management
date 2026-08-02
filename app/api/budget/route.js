@@ -1,14 +1,4 @@
-/**
- * app/api/budget/route.js
- *
- * GET  /api/budget?month=YYYY-MM  → fetch budget for a month
- * POST /api/budget                → create or update budget for a month
- *
- * We also return category spending totals so the UI can show
- * "spent X of limit Y" without a second API call.
- *
- * PHASE 2 (Day 1–2): Create after Budget model is ready.
- */
+
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -20,7 +10,6 @@ import Budget from "@/models/Budget";
 import Expense from "@/models/Expense";
 import { getMonthRange, getCurrentMonth } from "@/lib/utils";
 
-// ── GET /api/budget ──────────────────────────────────────────────────────────
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -34,13 +23,11 @@ export async function GET(request) {
 
     await connectDB();
 
-    // Fetch budget document
     const budget = await Budget.findOne({
       userId: session.user.id,
       month,
     });
 
-    // Also fetch total spending for this month grouped by category
     const { start, end } = getMonthRange(month);
     const categorySpending = await Expense.aggregate([
       {
@@ -57,7 +44,6 @@ export async function GET(request) {
       },
     ]);
 
-    // Total spent this month
     const totalSpent = categorySpending.reduce((sum, c) => sum + c.total, 0);
 
     return NextResponse.json({
@@ -77,7 +63,6 @@ export async function GET(request) {
   }
 }
 
-// ── POST /api/budget ─────────────────────────────────────────────────────────
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -97,7 +82,6 @@ export async function POST(request) {
 
     await connectDB();
 
-    // upsert: update if exists, create if not (one budget per user per month)
     const budget = await Budget.findOneAndUpdate(
       { userId: session.user.id, month },
       {

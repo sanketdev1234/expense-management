@@ -1,16 +1,3 @@
-# ml-service/routers/prediction.py
-#
-# FEATURE 5: Expense Prediction (Future Spending)
-#
-# ENDPOINT: POST /api/ml/predict-spending
-# INPUT:  { "monthly_totals": [{month, total}], "current_month_spent": 15000 }
-# OUTPUT: { "predicted_total": 31200, "days_remaining": 12, "daily_rate": 1200, ... }
-#
-# HOW IT WORKS:
-# Method 1 - Linear Regression on monthly data → predict next month total
-# Method 2 - Daily rate projection → if user spent X so far this month,
-#             project to end of month using daily spending rate
-# Both methods combined → weighted average prediction
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -21,7 +8,7 @@ from sklearn.linear_model import LinearRegression
 
 router = APIRouter()
 
-# ── Schemas ────────────────────────────────────────────────────────────────────
+#  Schemas 
 class MonthlyTotal(BaseModel):
     month: str   # "2026-01"
     total: float
@@ -45,7 +32,7 @@ class PredictionResponse(BaseModel):
     confidence: str   # "high" | "medium" | "low"
     message: str
 
-# ── Endpoint ───────────────────────────────────────────────────────────────────
+#  Endpoint 
 @router.post("/predict-spending", response_model=PredictionResponse)
 def predict_spending(req: PredictionRequest):
     """
@@ -57,7 +44,7 @@ def predict_spending(req: PredictionRequest):
     if not req.monthly_totals:
         raise HTTPException(status_code=400, detail="No monthly data provided")
 
-    # ── Date Setup ──────────────────────────────────────────────────────────
+    #  Date Setup 
     if req.current_date:
         today = datetime.strptime(req.current_date, "%Y-%m-%d").date()
     else:
@@ -72,7 +59,7 @@ def predict_spending(req: PredictionRequest):
     days_in_month = (next_month - date(today.year, today.month, 1)).days
     days_remaining = days_in_month - days_elapsed
 
-    # ── Method 1: Linear Regression on historical data ──────────────────────
+    # ── Method 1: Linear Regression on historical data 
     sorted_totals = sorted(req.monthly_totals, key=lambda x: x.month)
     historical_values = [m.total for m in sorted_totals]
 
@@ -88,7 +75,7 @@ def predict_spending(req: PredictionRequest):
         lr_prediction = float(np.mean(historical_values))
         confidence = "low"
 
-    # ── Method 2: Daily Rate Projection ────────────────────────────────────
+    # ── Method 2: Daily Rate Projection 
     if days_elapsed > 0:
         daily_rate = req.current_month_spent / days_elapsed
         projected_from_daily = req.current_month_spent + (daily_rate * days_remaining)
@@ -96,7 +83,7 @@ def predict_spending(req: PredictionRequest):
         daily_rate = 0.0
         projected_from_daily = lr_prediction
 
-    # ── Weighted Average (60% LR, 40% daily rate) ───────────────────────────
+    # ── Weighted Average (60% LR, 40% daily rate) 
     # More weight to daily rate when month is well underway
     if days_elapsed >= 10:
         weight_daily = 0.6
@@ -108,14 +95,14 @@ def predict_spending(req: PredictionRequest):
     final_prediction = (lr_prediction * weight_lr) + (projected_from_daily * weight_daily)
     final_prediction = round(final_prediction, -2)  # Round to nearest 100
 
-    # ── Budget Check ────────────────────────────────────────────────────────
+    # ── Budget Check 
     will_exceed = None
     excess_amount = None
     if req.budget_limit:
         will_exceed = final_prediction > req.budget_limit
         excess_amount = round(final_prediction - req.budget_limit, 2)
 
-    # ── Message ─────────────────────────────────────────────────────────────
+    # ── Message 
     if will_exceed:
         message = (
             f"⚠️ You may exceed your budget by ₹{excess_amount:,.0f} this month. "

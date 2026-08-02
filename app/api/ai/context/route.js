@@ -1,6 +1,3 @@
-// app/api/ai/context/route.js
-// Called ONCE when chat page loads
-// Returns all user financial context
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -22,7 +19,6 @@ export async function GET(request) {
   const month  = getCurrentMonth();
   const { start, end } = getMonthRange(month);
 
-  // ALL 3 queries run in parallel — once only
   const [currentExpenses, budget, historicalExpenses] = await Promise.all([
     Expense.find({ userId, date: { $gte: start, $lte: end } })
            .sort({ date: -1 })
@@ -32,7 +28,6 @@ export async function GET(request) {
            .lean(),
   ]);
 
-  // Build monthly totals from historical
   const monthlyMap = {};
   historicalExpenses.forEach((e) => {
     const m = new Date(e.date).toISOString().slice(0, 7);
@@ -42,7 +37,6 @@ export async function GET(request) {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([month, total]) => ({ month, total }));
 
-  // Category breakdown
   const catMap = {};
   currentExpenses.forEach((e) => {
     catMap[e.category] = (catMap[e.category] || 0) + e.amount;
@@ -60,7 +54,6 @@ export async function GET(request) {
     ? Math.round((totalSpent / budgetLimit) * 100)
     : null;
 
-  // Build complete context — sent with every message
   return NextResponse.json({
     month,
     total_spent:        totalSpent,

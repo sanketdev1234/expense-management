@@ -1,14 +1,3 @@
-/**
- * components/layout/Sidebar.js
- *
- * WHY THIS FILE EXISTS:
- * The persistent left sidebar shown on all dashboard pages.
- * It shows the app logo, navigation links, and a sign-out button.
- *
- * ACTIVE LINK: We use usePathname() to highlight the current route.
- *
- * PHASE 3 (Day 2): Build this as part of the dashboard layout.
- */
 
 "use client";
 

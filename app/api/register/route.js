@@ -1,24 +1,3 @@
-/**
- * app/api/register/route.js  — POST /api/register
- *
- * WHY THIS FILE EXISTS:
- * NextAuth handles LOGIN, but not REGISTRATION.
- * We need our own endpoint to create new user accounts.
- *
- * WHAT IT DOES:
- * 1. Validates the incoming request body (name, email, password)
- * 2. Checks if email is already taken
- * 3. Hashes the password with bcrypt (10 salt rounds)
- * 4. Creates the User document in MongoDB
- * 5. Returns success or an error message
- *
- * SECURITY:
- *   - Password is NEVER stored in plain text
- *   - bcrypt's hashing is slow by design (prevents brute force)
- *   - We return generic errors to avoid leaking user info
- *
- * PHASE 2 (Day 1–2): Build models first, then this route.
- */
 
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
@@ -30,7 +9,7 @@ export async function POST(request) {
     const body = await request.json();
     const { name, email, password } = body;
 
-    // ── Validation ──────────────────────────────────────────────────────────
+    //  Validation 
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Name, email, and password are required" },
@@ -45,10 +24,10 @@ export async function POST(request) {
       );
     }
 
-    // ── DB Connection ────────────────────────────────────────────────────────
+    //  DB Connection 
     await connectDB();
 
-    // ── Check for duplicate email ────────────────────────────────────────────
+    //  Check for duplicate email 
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return NextResponse.json(
@@ -57,18 +36,17 @@ export async function POST(request) {
       );
     }
 
-    // ── Hash password ────────────────────────────────────────────────────────
-    // 10 salt rounds is the standard balance of security vs performance
+   
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ── Create user ──────────────────────────────────────────────────────────
+    
     const user = await User.create({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password: hashedPassword,
     });
 
-    // Return safe user data (never return password, even hashed)
+    
     return NextResponse.json(
       {
         message: "Account created successfully",
@@ -83,7 +61,7 @@ export async function POST(request) {
   } catch (error) {
     console.error("Registration error:", error);
 
-    // Mongoose validation error (e.g., invalid email format)
+   
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map((e) => e.message);
       return NextResponse.json({ error: messages[0] }, { status: 400 });

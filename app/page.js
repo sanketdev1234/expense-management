@@ -1,6 +1,3 @@
-/**
- * app/page.js  — Landing / Home Page
- */
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";

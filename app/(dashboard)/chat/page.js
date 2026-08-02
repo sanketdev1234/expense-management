@@ -1,4 +1,4 @@
-// app/(dashboard)/chat/page.js
+
 
 "use client";
 
@@ -28,7 +28,7 @@ export default function ChatPage() {
 
   const bottomRef = useRef(null);
 
-  // ── Fetch context ONCE on mount ─────────────────────────────────────────────
+  
   useEffect(() => {
     async function loadContext() {
       try {
@@ -44,7 +44,7 @@ export default function ChatPage() {
       }
     }
     loadContext();
-  }, []); // ← empty array — runs ONCE only
+  }, []); 
 
   // Auto-scroll
   useEffect(() => {
@@ -70,11 +70,10 @@ export default function ChatPage() {
         body: JSON.stringify({
           message: userMessage,
 
-          // ← Context sent from state — no DB query in backend
+   
           user_context: userContext,
 
-          // ← Server remembers conversation via this ID
-          // null on first message, ID on subsequent messages
+
           previous_interaction_id: previousInteractionId,
         }),
       });
@@ -132,7 +131,7 @@ export default function ChatPage() {
     }
   }
 
-  // ── Refresh context manually (user can trigger) ─────────────────────────────
+  //  Refresh context manually (user can trigger) 
   async function refreshContext() {
     setContextLoading(true);
     try {
@@ -143,7 +142,7 @@ export default function ChatPage() {
     setContextLoading(false);
   }
 
-  // ── Loading state while context fetches ─────────────────────────────────────
+  //  Loading state while context fetches 
   if (contextLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh] flex-col gap-3">

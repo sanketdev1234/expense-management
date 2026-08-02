@@ -1,21 +1,3 @@
-# ml-service/routers/anomaly.py
-#
-# FEATURE 4: Expense Anomaly Detection
-#
-# ENDPOINT: POST /api/ml/detect-anomaly
-# INPUT:  { "expense": {...}, "history": [...past expenses...] }
-# OUTPUT: { "is_anomaly": true, "reason": "...", "severity": "high", "z_score": 2.8 }
-#
-# HOW IT WORKS:
-# Method 1 - Z-Score: If expense is >2 standard deviations above the mean for
-#             that category, it's an anomaly.
-# Method 2 - IQR: If expense is above Q3 + 1.5*IQR for that category, anomaly.
-# Both methods are combined — if either fires, show the alert.
-#
-# EXAMPLE:
-# User normally spends ₹200-₹500 on food
-# New expense: ₹3,500 food
-# → Z-score = 3.2 → ANOMALY DETECTED
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -29,24 +11,22 @@ class Expense(BaseModel):
     title: str
     amount: float
     category: str
-    date: str   # "2026-03-15"
-
+    date: str   
 class AnomalyRequest(BaseModel):
-    expense: Expense              # The new expense to check
-    history: List[Expense]        # Past expenses (same user)
-    z_threshold: float = 2.0      # Z-score threshold (2.0 = 95% confidence)
-    min_history: int = 5          # Minimum samples needed
-
+    expense: Expense             
+    history: List[Expense]       
+    z_threshold: float = 2.0     
+    min_history: int = 5          
 class AnomalyResponse(BaseModel):
     is_anomaly: bool
-    severity: str               # "none" | "low" | "medium" | "high"
+    severity: str              
     reason: str
     z_score: Optional[float]
     category_average: Optional[float]
     category_std: Optional[float]
     similar_expenses_count: int
 
-# ── Detection Logic ────────────────────────────────────────────────────────────
+
 def calculate_z_score(value: float, mean: float, std: float) -> float:
     if std == 0:
         return 0.0
@@ -61,7 +41,7 @@ def get_severity(z_score: float) -> str:
         return "low"
     return "none"
 
-# ── Endpoint ───────────────────────────────────────────────────────────────────
+
 @router.post("/detect-anomaly", response_model=AnomalyResponse)
 def detect_anomaly(req: AnomalyRequest):
     """
@@ -96,10 +76,10 @@ def detect_anomaly(req: AnomalyRequest):
     std = float(np.std(amounts))
     median = float(np.median(amounts)) 
 
-    # ── Z-Score Method ──────────────────────────────────────────────────────
+ 
     z_score = calculate_z_score(amount, mean, std)
 
-    # ── IQR Method ─────────────────────────────────────────────────────────
+
     q1 = float(np.percentile(amounts, 25))
     q3 = float(np.percentile(amounts, 75))
     iqr = q3 - q1
@@ -111,7 +91,7 @@ def detect_anomaly(req: AnomalyRequest):
     is_anomaly = is_z_anomaly or is_iqr_anomaly
     severity = get_severity(z_score)
 
-    # ── Build Human-Readable Reason ─────────────────────────────────────────
+
     if not is_anomaly:
         reason = (
             f"This {category} expense of ₹{amount:,.0f} is within your normal range "

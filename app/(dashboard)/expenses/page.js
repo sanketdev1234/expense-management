@@ -6,7 +6,6 @@ import { Plus, Pencil, Trash2, Filter, ChevronLeft, ChevronRight, Sparkles, Aler
 import toast from "react-hot-toast";
 import { formatCurrency, getCurrentMonth, CATEGORIES, CATEGORY_ICONS } from "@/lib/utils";
 
-// ── ML Hook: debounced category prediction ────────────────────────────────────
 function usePredictCategory(title, enabled = true) {
   const [prediction, setPrediction] = useState(null);
   const [predicting, setPredicting] = useState(false);
@@ -35,7 +34,6 @@ function usePredictCategory(title, enabled = true) {
           }
         }
       } catch {
-        // Silently fail
       } finally {
         setPredicting(false);
       }
@@ -47,17 +45,13 @@ function usePredictCategory(title, enabled = true) {
   return { prediction, predicting };
 }
 
-// ── Helper: safe date string from MongoDB date ────────────────────────────────
-// Fixes timezone issue: "2026-06-01T10:30:00.000Z" → "2026-06-01"
-// Using slice avoids timezone offset shifting the date
 function toDateInputValue(isoString) {
   if (!isoString) return format(new Date(), "yyyy-MM-dd");
-  // slice(0,10) gives "YYYY-MM-DD" directly from ISO string
-  // avoids new Date() timezone conversion
+
   return new Date(isoString).toISOString().slice(0, 10);
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ── Main Page 
 export default function ExpensesPage() {
   const [expenses,       setExpenses]       = useState([]);
   const [loading,        setLoading]        = useState(true);
@@ -66,9 +60,7 @@ export default function ExpensesPage() {
   const [showModal,      setShowModal]      = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
 
-  // ── Fetch 3 months of expenses for anomaly history ─────────────────────────
-  // current month expenses → for table display
-  // 3 months history → for anomaly detection
+  
   const [expenseHistory, setExpenseHistory] = useState([]); // last 3 months flat array
 
   const fetchExpenses = useCallback(async () => {
@@ -85,8 +77,6 @@ export default function ExpensesPage() {
     }
   }, [month]);
 
-  // Fetch 3 months of history for anomaly detection
-  // Runs once on mount — not dependent on month navigation
   const fetchHistory = useCallback(async () => {
     try {
       const now = new Date();
@@ -102,7 +92,7 @@ export default function ExpensesPage() {
       const flat = results.flat().filter(Array.isArray(results[0]) ? Boolean : () => true);
       setExpenseHistory(flat.filter((e) => e && e.amount));
     } catch {
-      // Silently fail — anomaly just won't work
+     
     }
   }, []);
 
@@ -255,7 +245,7 @@ export default function ExpensesPage() {
       {showModal && (
         <ExpenseModal
           expense={editingExpense}
-          expenseHistory={expenseHistory}   // ← 3 months history for anomaly
+          expenseHistory={expenseHistory}   
           onClose={() => { setShowModal(false); setEditingExpense(null); }}
           onSaved={() => {
             setShowModal(false);
@@ -269,16 +259,16 @@ export default function ExpensesPage() {
   );
 }
 
-// ── Expense Modal ─────────────────────────────────────────────────────────────
+//  Expense Modal 
 function ExpenseModal({ expense, expenseHistory = [], onClose, onSaved }) {
   const isEdit = !!expense;
 
   const [form, setForm] = useState({
     title:       expense?.title                          || "",
-    amount:      expense?.amount?.toString()             || "",  // FIX: number → string
+    amount:      expense?.amount?.toString()             || "", 
     category:    expense?.category                       || CATEGORIES[0],
     date:        expense?.date
-                   ? toDateInputValue(expense.date)      // FIX: timezone-safe
+                   ? toDateInputValue(expense.date)     
                    : format(new Date(), "yyyy-MM-dd"),
     description: expense?.description                   || "",
   });
@@ -288,10 +278,10 @@ function ExpenseModal({ expense, expenseHistory = [], onClose, onSaved }) {
   const [anomalyWarning, setAnomalyWarning] = useState(null);
   const [checkingAnomaly,setCheckingAnomaly]= useState(false);
 
-  // ML category prediction — only for new expenses
+  
   const { prediction, predicting } = usePredictCategory(form.title, !isEdit);
 
-  // Auto-fill category when prediction arrives
+  
   useEffect(() => {
     if (prediction?.category && !isEdit) {
       setForm((prev) => ({ ...prev, category: prediction.category }));
@@ -302,11 +292,11 @@ function ExpenseModal({ expense, expenseHistory = [], onClose, onSaved }) {
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    if (name === "category") setAiUsed(false);   // clear AI badge on manual change
-    if (name === "amount")   setAnomalyWarning(null); // clear warning on amount change
+    if (name === "category") setAiUsed(false);   
+    if (name === "amount")   setAnomalyWarning(null); 
   }
 
-  // ── Anomaly check on amount blur ───────────────────────────────────────────
+  // ── Anomaly check on amount blur 
   async function checkAnomaly() {
     const amount = parseFloat(form.amount);
     if (!amount || amount <= 0) return;
@@ -316,8 +306,7 @@ function ExpenseModal({ expense, expenseHistory = [], onClose, onSaved }) {
       (e) => e.category === form.category
     );
 
-    // Need minimum 5 same-category expenses for meaningful Z-Score
-    // If less than 5 → not enough data → skip silently
+    
     if (sameCategoryHistory.length < 5) {
       setAnomalyWarning(null);
       return;
@@ -336,7 +325,7 @@ function ExpenseModal({ expense, expenseHistory = [], onClose, onSaved }) {
             category: form.category,
             date:     form.date,
           },
-          // Send full 3-month history — Python filters by category internally too
+   
           history: expenseHistory.map((e) => ({
             title:    e.title,
             amount:   e.amount,
@@ -360,7 +349,7 @@ function ExpenseModal({ expense, expenseHistory = [], onClose, onSaved }) {
     }
   }
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
+  // ── Submit 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.title.trim() || !form.amount || !form.category || !form.date) {

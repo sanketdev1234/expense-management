@@ -4,11 +4,10 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { connectDB } from "@/lib/mongodb";
 import Expense from "@/models/Expense";
 
-// ── PATCH /api/expenses/:id ──────────────────────────────────────────────────
 export async function PATCH(request,  {params} ) {
   try {
    
-    const { id } = await params; // ← FIX: await params
+    const { id } = await params; 
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -42,10 +41,10 @@ export async function PATCH(request,  {params} ) {
   }
 }
 
-// ── DELETE /api/expenses/:id ─────────────────────────────────────────────────
+
 export async function DELETE(request, { params }) {
   try {
-    const { id } = await params; // ← FIX: await params
+    const { id } = await params; 
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

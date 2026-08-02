@@ -1,14 +1,3 @@
-/**
- * app/api/expenses/route.js
- *
- * GET  /api/expenses?month=YYYY-MM  → fetch expenses for a month
- * POST /api/expenses                → create a new expense
- *
- * Both routes are protected: we call auth() and check for a session.
- * If no session → 401 Unauthorized.
- *
- * PHASE 2 (Day 1–2): Build after models are ready.
- */
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -19,7 +8,7 @@ import { connectDB } from "@/lib/mongodb";
 import Expense from "@/models/Expense";
 import { getMonthRange, getCurrentMonth } from "@/lib/utils";
 
-// ── GET /api/expenses ────────────────────────────────────────────────────────
+
 export async function GET(request) {
   try {
    const session = await getServerSession(authOptions);
@@ -32,13 +21,13 @@ export async function GET(request) {
 
     await connectDB();
 
-    // Build the date range for the requested month
+
     const { start, end } = getMonthRange(month);
 
     const expenses = await Expense.find({
       userId: session.user.id,
       date: { $gte: start, $lte: end },
-    }).sort({ date: -1 }); // Most recent first
+    }).sort({ date: -1 }); 
 
     return NextResponse.json(expenses);
   } catch (error) {
@@ -47,7 +36,7 @@ export async function GET(request) {
   }
 }
 
-// ── POST /api/expenses ───────────────────────────────────────────────────────
+
 export async function POST(request) {
   try {
    const session = await getServerSession(authOptions);

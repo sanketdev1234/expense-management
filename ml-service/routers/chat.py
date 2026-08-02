@@ -1,6 +1,3 @@
-# ml-service/routers/chat.py
-## Uses the NEW GA Interactions API
-# Package: google-genai >= 2.3.0
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -17,7 +14,7 @@ client = genai.Client()
 
 class ChatRequest(BaseModel):
     message: str
-    # Server-side state pointer: Frontend passes this back to resume thread history
+    
     previous_interaction_id: Optional[str] = None
     user_context: Dict
 
@@ -25,7 +22,7 @@ class ChatRequest(BaseModel):
 async def financial_chat(req: ChatRequest):
     ctx = req.user_context
 
-    # ── Build RAG Context ───────────────────────────────────────────────────
+    
     monthly_history = ctx.get('monthly_totals', [])
     context_string = f"""USER'S COMPLETE FINANCIAL PROFILE:
 Current month ({ctx.get('month', 'this month')}):
@@ -48,7 +45,7 @@ Recent 8 transactions:
 Spending pattern type: {ctx.get('pattern_type', 'Unknown')}
 Weekend vs weekday spending: {ctx.get('weekend_ratio', 1.0):.1f}x higher on weekends"""
 
-    # ── System Prompt (Interaction-Scoped) ──────────────────────────────────
+   
     system_prompt = f"""You are FinBot — a friendly, smart personal financial advisor
 built into the user's SpendWise AI expense tracking app.
 
@@ -65,37 +62,36 @@ Rules:
 - If asked something unrelated: "I can only help with your finances!"
 - Use ₹ symbol for all amounts"""
 
-    # ── Async SSE Stream Generator ──────────────────────────────────────────
-    # ── Async SSE Stream Generator ──────────────────────────────────────────
+
     async def generate():
         interaction_id = None
         try:
-            # Build payload map for stateful tracking matching GA specifications
+           
             params = {
                 "model": "gemini-3.6-flash",
                 "input": req.message,
-                "system_instruction": system_prompt, # specified each turn as it is interaction-scoped
-                "stream": True, # Triggers streaming event updates
+                "system_instruction": system_prompt, 
+                "stream": True, 
                 "generation_config": {
                     "max_output_tokens": 1024,
                     "temperature": 0.7,
                 }
             }
 
-            # If an interaction ID pointer exists, use server-side state tracking context
+            
             if req.previous_interaction_id:
                 params["previous_interaction_id"] = req.previous_interaction_id
 
-            # FIX: Call the correct async endpoint mapping: client.aio.interactions.create
+            
             stream = await client.aio.interactions.create(**params)
 
-            # Asynchronously iterate through the interaction stream events
+            
             async for event in stream:
-                # 1. Capture the unique session ID pointer from the stream metadata
+                
                 if hasattr(event, 'id') and event.id:
                     interaction_id = event.id
 
-                # 2. Extract textual token updates out of incremental step deltas
+                
                 if event.event_type == "step.delta":
                     if hasattr(event, 'delta') and event.delta.type == "text" and event.delta.text:
                         yield f"data: {json.dumps({'text': event.delta.text})}\n\n"

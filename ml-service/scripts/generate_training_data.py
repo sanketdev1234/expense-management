@@ -1,18 +1,9 @@
-# ml-service/scripts/generate_training_data.py
-#
-# PURPOSE: Generate labeled training data for the category prediction model.
-# Run this ONCE before training: python scripts/generate_training_data.py
-#
-# DATA SOURCE: Manually curated expense titles → categories
-# You can add more rows to improve accuracy.
-# ml-service/scripts/generate_training_data.py
-# COMPLETE VERSION — 400+ samples for much better accuracy
 
 import pandas as pd
 import os
 
 data = [
-    # ── Food & Dining (60 samples) ────────────────────────────────────────────
+   
     ("Pizza Hut", "Food & Dining"), ("Dominos pizza", "Food & Dining"),
     ("McDonald's burger", "Food & Dining"), ("KFC chicken", "Food & Dining"),
     ("Zomato order", "Food & Dining"), ("Swiggy delivery", "Food & Dining"),
@@ -44,7 +35,7 @@ data = [
     ("Haldirams snacks", "Food & Dining"), ("Lay's chips biscuits", "Food & Dining"),
     ("hotel breakfast", "Food & Dining"), ("mess food", "Food & Dining"),
 
-    # ── Transportation (50 samples) ───────────────────────────────────────────
+    
     ("Uber ride", "Transportation"), ("Ola cab", "Transportation"),
     ("Rapido bike", "Transportation"), ("auto rickshaw", "Transportation"),
     ("metro card recharge", "Transportation"), ("bus ticket", "Transportation"),
@@ -71,7 +62,7 @@ data = [
     ("Yulu cycle rental", "Transportation"), ("Bounce scooter", "Transportation"),
     ("parking token", "Transportation"), ("road tax", "Transportation"),
 
-    # ── Shopping (50 samples) ─────────────────────────────────────────────────
+    
     ("Amazon purchase", "Shopping"), ("Flipkart order", "Shopping"),
     ("Meesho order", "Shopping"), ("Myntra clothes", "Shopping"),
     ("shoes purchase", "Shopping"), ("shirt jeans", "Shopping"),
@@ -98,7 +89,7 @@ data = [
     ("camera photography", "Shopping"), ("gaming mouse keyboard", "Shopping"),
     ("charger cable wire", "Shopping"), ("power bank", "Shopping"),
 
-    # ── Entertainment (45 samples) ────────────────────────────────────────────
+    
     ("Netflix subscription", "Entertainment"), ("Amazon Prime", "Entertainment"),
     ("Hotstar Disney", "Entertainment"), ("Spotify music", "Entertainment"),
     ("YouTube Premium", "Entertainment"), ("movie tickets", "Entertainment"),
@@ -123,7 +114,7 @@ data = [
     ("billiards snooker", "Entertainment"), ("go karting", "Entertainment"),
     ("trampoline park", "Entertainment"),
 
-    # ── Bills & Utilities (45 samples) ────────────────────────────────────────
+    
     ("electricity bill", "Bills & Utilities"), ("water bill", "Bills & Utilities"),
     ("gas cylinder", "Bills & Utilities"), ("internet recharge", "Bills & Utilities"),
     ("broadband bill", "Bills & Utilities"), ("mobile recharge", "Bills & Utilities"),
@@ -148,7 +139,7 @@ data = [
     ("printer subscription", "Bills & Utilities"), ("software license", "Bills & Utilities"),
     ("cloud storage subscription", "Bills & Utilities"),
 
-    # ── Healthcare (45 samples) ───────────────────────────────────────────────
+    
     ("doctor consultation", "Healthcare"), ("hospital charges", "Healthcare"),
     ("medicine pharmacy", "Healthcare"), ("medical test", "Healthcare"),
     ("blood test", "Healthcare"), ("X-ray scan", "Healthcare"),
@@ -173,7 +164,7 @@ data = [
     ("protein supplement", "Healthcare"), ("vitamin supplement", "Healthcare"),
     ("ayurvedic treatment", "Healthcare"),
 
-    # ── Education (40 samples) ────────────────────────────────────────────────
+    
     ("college fees", "Education"), ("tuition fees", "Education"),
     ("Udemy course", "Education"), ("Coursera subscription", "Education"),
     ("books textbook", "Education"), ("exam fees", "Education"),
@@ -195,7 +186,7 @@ data = [
     ("distance learning", "Education"), ("study material", "Education"),
     ("notebook stationery", "Education"), ("drawing instruments", "Education"),
 
-    # ── Travel (40 samples) ───────────────────────────────────────────────────
+    
     ("flight ticket", "Travel"), ("IndiGo flight", "Travel"),
     ("Air India booking", "Travel"), ("hotel booking", "Travel"),
     ("OYO rooms", "Travel"), ("MakeMyTrip booking", "Travel"),
@@ -217,7 +208,7 @@ data = [
     ("snorkeling scuba", "Travel"), ("trekking camping", "Travel"),
     ("adventure sports", "Travel"), ("cruise ship booking", "Travel"),
 
-    # ── Other (35 samples) ────────────────────────────────────────────────────
+    
     ("ATM withdrawal", "Other"), ("bank charges", "Other"),
     ("miscellaneous expense", "Other"), ("donation charity", "Other"),
     ("temple donation", "Other"), ("newspaper subscription", "Other"),

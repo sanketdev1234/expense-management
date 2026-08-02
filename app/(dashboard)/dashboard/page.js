@@ -1,16 +1,4 @@
-/**
- * app/(dashboard)/dashboard/page.js  — Dashboard Page  /dashboard
- *
- * WHAT IT SHOWS:
- * - 4 KPI cards: Total Spent, # Expenses, Top Category, Budget Used %
- * - Budget alert bar (if over 80% of monthly budget)
- * - Pie chart: spending by category (this month)
- * - Recent expenses table (last 5)
- *
- * DATA: Fetched from GET /api/dashboard in one shot.
- *
- * PHASE 4 (Day 3): Build this after all API routes are working.
- */
+
 
 "use client";
 
@@ -230,7 +218,7 @@ export default function DashboardPage() {
   );
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Sub-components 
 
 function KpiCard({ label, value, icon: Icon, color, sub }) {
   return (

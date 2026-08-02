@@ -1,5 +1,4 @@
-# ml-service/main.py
-# FastAPI entry point — starts the ML microservice on port 8000
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -15,7 +14,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Allow requests from Next.js frontend (localhost:3000)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "https://your-app.vercel.app"],
@@ -24,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register all feature routers
+
 app.include_router(category.router,   prefix="/api/ml", tags=["Category Prediction"])
 app.include_router(budget.router,     prefix="/api/ml", tags=["Budget Recommendation"])
 app.include_router(anomaly.router,    prefix="/api/ml", tags=["Anomaly Detection"])

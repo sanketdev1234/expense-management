@@ -1,18 +1,4 @@
-/**
- * app/(auth)/login/page.js  — Login Page  /login
- *
- * WHY THE (auth) FOLDER:
- * The parentheses make it a "route group" — it organizes files without
- * affecting the URL. /login is still /login, not /auth/login.
- *
- * WHAT IT DOES:
- * - Shows email + password form
- * - Calls NextAuth's signIn("credentials", ...) on submit
- * - On success → redirects to /dashboard
- * - On failure → shows error toast
- *
- * PHASE 3 (Day 2): Build this after API routes are working.
- */
+
 
 "use client";
 
